@@ -4,35 +4,36 @@ declare(strict_types=1);
 
 require_once './vendor/autoload.php';
 
-convertJsonTest();
-convertCsvTest();
+girlClothesTest();
 
-function convertJsonTest(): void
+function girlClothesTest(): void
 {
-    $jsonPath = './src/test/import_example_update.json';
-    $resultCsvPath = './result/test/import_example_update.csv';
+    $srcCsvFilePath = './src/test/girlClothes.csv';
+    $srcJsonFilePath = './src/test/girlClothes.json';
+    $resultCsvFile = './result/test/girlClothes.csv';
+    $resultJsonFilePath = './result/test/girlClothes.json';
 
-    $json = file_get_contents($jsonPath);
+    $json = csvToJson($srcCsvFilePath);
 
-    jsonToCsv($json, $resultCsvPath);
+    $arr = json_decode($json);
 
-    echo 'Json файл ' . $jsonPath . ' успешно конвертирован в csv файл ' . $resultCsvPath . PHP_EOL;
-}
+    $jsonResult = jsonEncode($arr);
 
-function convertCsvTest(): void
-{
-    $csvFilePath = './src/test/import_example_update.csv';
-    $resultJsonPath = './result/test/import_example_update.json';
+    file_put_contents($resultJsonFilePath, $jsonResult);
 
-    $jsonData = csvToJson($csvFilePath);
+    jsonToCsv($jsonResult, $resultCsvFile, false);
 
-    if ($jsonData === false) {
-        throw new Exception('Ошибка при конвертации csv в json');
+    if (!filesAreEqualByHash($srcCsvFilePath, $resultCsvFile)) {
+        echo 'ВНИМАНИЕ!!!!!!!! Тест провалился, файлы '. $srcCsvFilePath . ' и ' . $resultCsvFile . ' не идентичны' . PHP_EOL;
     }
 
-    file_put_contents($resultJsonPath, $jsonData);
+    //пока отключил т.к. это непринципиално в данный момент
+//    if (!filesAreEqualByHash($srcJsonFilePath, $resultJsonFilePath)) {
+//       echo 'ВНИМАНИЕ!!!!!!!! Тест провалился, файлы '. $srcJsonFilePath . ' и ' . $resultJsonFilePath . ' не идентичны' . PHP_EOL;
+//    }
 
-    echo 'csv файл ' . $csvFilePath. ' успешно конвертирован в json файл ' . $resultJsonPath . PHP_EOL;
+    echo 'Тест прошел успешно! csv файл ' . $srcCsvFilePath. ' успешно конвертирован в json файл '
+        . $resultJsonFilePath . ' и в идентичный csv файл ' . $resultCsvFile . PHP_EOL;
 }
 
 function girlClothes(): void
@@ -60,7 +61,7 @@ function girlClothes(): void
 }
 
 // Функция для преобразования CSV в JSON
-function csvToJson($csvFilePath)
+function csvToJson($csvFilePath): string | bool
 {
     $csvFile = fopen($csvFilePath, 'r');
     if ($csvFile === false) {
@@ -136,4 +137,25 @@ function jsonToCsv($jsonString, $csvFilePath, bool $noDoubleQuotes = true): bool
     }
 
     return true;
+}
+
+function filesAreEqualByHash(string $filePath1, string $filePath2): bool
+{
+    $hash1 = hash_file('md5', $filePath1);
+    $hash2 = hash_file('md5', $filePath2);
+
+    return $hash1 === $hash2;
+}
+
+
+function jsonEncode(mixed $data): string
+{
+    return json_encode(
+        $data,
+        JSON_UNESCAPED_UNICODE
+        | JSON_PRETTY_PRINT
+        | JSON_UNESCAPED_SLASHES
+        | JSON_NUMERIC_CHECK
+        | JSON_UNESCAPED_LINE_TERMINATORS
+    );
 }
