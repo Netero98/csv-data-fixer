@@ -9,22 +9,20 @@ convertCsvTest();
 
 function convertJsonTest(): void
 {
-    $jsonPath = './src/import_example_update.json';
-    $resultCsvPath = './result/import_example_update.csv';
+    $jsonPath = './src/test/import_example_update.json';
+    $resultCsvPath = './result/test/import_example_update.csv';
 
     $json = file_get_contents($jsonPath);
 
-//    jsonToCsvSave($json, $resultCsvPath);
-    jsonToCsv($json, './result/import_example_update.csv');
+    jsonToCsv($json, $resultCsvPath);
 
     echo 'Json файл ' . $jsonPath . ' успешно конвертирован в csv файл ' . $resultCsvPath . PHP_EOL;
 }
 
 function convertCsvTest(): void
 {
-    $csvFilePath = './src/import_example_update.csv';
-
-    $jsonPath = './result/import_example_update.json';
+    $csvFilePath = './src/test/import_example_update.csv';
+    $resultJsonPath = './result/test/import_example_update.json';
 
     $jsonData = csvToJson($csvFilePath);
 
@@ -32,15 +30,15 @@ function convertCsvTest(): void
         throw new Exception('Ошибка при конвертации csv в json');
     }
 
-    file_put_contents($jsonPath, $jsonData);
+    file_put_contents($resultJsonPath, $jsonData);
 
-    echo 'csv файл ' . $csvFilePath. ' успешно конвертирован в json файл ' . $jsonPath . PHP_EOL;
+    echo 'csv файл ' . $csvFilePath. ' успешно конвертирован в json файл ' . $resultJsonPath . PHP_EOL;
 }
 
 function girlClothes(): void
 {
-    $inputFileName = './src/girlClothes.json';
-    $resultJsonFile = './result/girlClothesFixed.json';
+    $inputFileName = './src/girlClothes/girlClothes.json';
+    $resultJsonFile = './result/girlClothes/girlClothes.json';
 
     $js = file_get_contents($inputFileName);
 
