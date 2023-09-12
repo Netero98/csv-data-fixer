@@ -1,5 +1,8 @@
 {
     "require": {
-        "parsecsv/php-parsecsv": "^1.3"
+        "parsecsv/php-parsecsv": "^1.3",
+        "league/csv": "^9.0",
+      "ext-dom": "*",
+      "ext-libxml": "*"
     }
 }

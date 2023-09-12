@@ -3,187 +3,191 @@
 declare(strict_types=1);
 
 require_once './vendor/autoload.php';
+require_once 'V2.php';
 
-//girlClothesTest();
-//manBoots();
-//girlBoots();
-girlClothesVlast();
-girlBoots();
+main();
+//testHtml();
 
-
-function girlBoots(): void
+function main(): void
 {
-    $inputFilePath = './src/girlBoots/girlBoots.csv';
-    $resultFilePath = './result/girlBoots/girlBoots';
+//    echo "Введите путь к источнику: ";
+//    $srcPath = fgets(STDIN);
+//
+//    echo "Введите путь к желаемому результату: ";
+//    $resultPath = fgets(STDIN);
+//
+//    echo "Введите название старого раздела: ";
+//    $oldCategory = fgets(STDIN);
+//
+//    echo "Введите название нового раздела: ";
+//    $newCategory = fgets(STDIN);
+//
+//    createFixedClone($srcPath, $resultPath, $oldCategory, $newCategory);
 
-    $js = csvToJson($inputFilePath);
+    createFixedCloneNoChunk(
+        '/home/dan/www/php/fixer/src/girlClothes/girlClothes.csv',
+        '/home/dan/www/php/fixer/result/girlClothes.csv',
+        'Женское',
+        'Женская одежда'
+    );
 
-    $arr = json_decode($js);
+    createFixedCloneNoChunk(
+        './src/girlBoots/girlBoots.csv',
+        './result/girlBoots.csv',
+        'Женское',
+        'Женская обувь'
+    );
+
+    createFixedCloneNoChunk(
+        './src/manClothes/manClothes.csv',
+        './result/manClothes.csv',
+        'Мужское',
+        'Мужская одежда'
+    );
+
+    createFixedCloneNoChunk(
+        './src/manBoots/manBoots.csv',
+        './result/manBoots.csv',
+        'Мужское',
+        'Мужская обувь'
+    );
+}
+
+function createFixedCloneNoChunk(string $srcCsvPath, string $resultCsvPath, string $oldCategory, string $newCategory): void
+{
+    $js = csvToJson($srcCsvPath);
+
+    $arr = json_decode($js, true);
 
     $counter = 0;
 
-    foreach ($arr as $key => $object) {
-        if (!empty($object->Price)) {
-            $object->Price = floor($object->Price * 1.5);
+    foreach ($arr as $key => &$object) {
+        if (!empty($object['Price'])) {
+            $object['Price'] = floor($object['Price'] * 1.5);
         }
 
-        if ($object->Category === 'Женское') {
-            $object->Category = 'Женская обувь';
-        }
+        if ($object['Category'] === $oldCategory) {
+            $object['Category'] = $newCategory;
 
-        if (($counter + 1) % 200 === 0) {
-            $jsResult = json_encode(array_slice($arr, $counter - 200, 200));
+            $object['Text'] = addInlineStylesToAttributes($object['Text']) . getDeliveryHtml() . getPaymentHtml();
 
-            jsonToCsv($jsResult, $resultFilePath . '_' . $counter - 198 . '-' . $counter + 1 . '.csv', false);
-        }
+            $object['Description'] = '';
 
-        if ($object->Category === 'Женская обувь') {
+            echo $newCategory . '_' . $counter . PHP_EOL;
+
             ++$counter;
         }
     }
 
-    $jsResult = json_encode(array_slice($arr, $counter - ($counter % 200)));
+    $jsResult = json_encode($arr);
 
-    jsonToCsv($jsResult, $resultFilePath . '_' .  $counter - ($counter % 200) + 1 . '-' . $counter + 1 .'.csv');
+    jsonToCsv($jsResult, $resultCsvPath);
 }
 
-function manBoots(): void
-{
-    $srcCsvFilePath = './src/manBoots/manBoots.csv';
-
-    $resultJsonFilePath = './result/manBoots/manBoots.json';
-
-    $json = csvToJson($srcCsvFilePath);
-
-    file_put_contents($resultJsonFilePath, $json);
-}
-
-function girlClothesTest(): void
-{
-    $srcCsvFilePath = './src/test/girlClothes.csv';
-    $srcJsonFilePath = './src/test/girlClothes.json';
-    $resultCsvFile = './result/test/girlClothes.csv';
-    $resultJsonFilePath = './result/test/girlClothes.json';
-
-    $json = csvToJson($srcCsvFilePath);
-
-    $arr = json_decode($json);
-
-    $jsonResult = jsonEncode($arr);
-
-    file_put_contents($resultJsonFilePath, $jsonResult);
-
-    jsonToCsv($jsonResult, $resultCsvFile);
-
-    if (!filesAreEqualByHash($srcCsvFilePath, $resultCsvFile)) {
-        echo 'ВНИМАНИЕ!!!!!!!! Тест провалился, файлы '. $srcCsvFilePath . ' и ' . $resultCsvFile . ' не идентичны' . PHP_EOL;
-    }
-
-    //пока отключил т.к. это непринципиално в данный момент
-//    if (!filesAreEqualByHash($srcJsonFilePath, $resultJsonFilePath)) {
-//       echo 'ВНИМАНИЕ!!!!!!!! Тест провалился, файлы '. $srcJsonFilePath . ' и ' . $resultJsonFilePath . ' не идентичны' . PHP_EOL;
+//function createFixedClone(string $srcCsvPath, string $resultCsvPath, string $oldCategory, string $newCategory): void
+//{
+//    $js = csvToJson($srcCsvPath);
+//
+//    $arr = json_decode($js, true);
+//
+//    $counter = 0;
+//
+//    foreach ($arr as $key => &$object) {
+//        if (!empty($object['Price'])) {
+//            $object['Price'] = floor($object['Price'] * 1.5);
+//        }
+//
+//        if ($object['Category'] === $oldCategory) {
+//            $object['Category'] = $newCategory;
+//
+//            $object['Text'] = addInlineStylesToAttributes($object['Text']) . getDeliveryHtml() . getPaymentHtml();
+//
+//            if (($counter + 1) % 200 === 0) {
+//                $jsResult = json_encode(array_slice($arr, $counter - 200, 200));
+//
+//                jsonToCsv($jsResult, $resultCsvPath . '_' . $counter - 198 . '-' . $counter + 1 . '.csv', false);
+//            }
+//
+//            ++$counter;
+//        }
 //    }
+//
+//    $jsResult = json_encode(array_slice($arr, $counter - ($counter % 200)));
+//
+//    jsonToCsv($jsResult, $resultCsvPath . '_' . $counter - ($counter % 200) + 1 . '-' . $counter + 1 . '.csv');
+//
+//}
 
-    echo 'Тест прошел успешно! csv файл ' . $srcCsvFilePath. ' успешно конвертирован в json файл '
-        . $resultJsonFilePath . ' и в идентичный csv файл ' . $resultCsvFile . PHP_EOL;
-}
 
-
-function girlClothesVlast(): void
+function getPaymentHtml(): string
 {
-    $inputFilePath = './src/girlClothes/girlClothes.csv';
-    $resultFilePath = './result/girlClothes/girlClothes.csv';
-
-    $js = csvToJson($inputFilePath);
-
-    $arr = json_decode($js);
-
-    foreach ($arr as $key => $object) {
-        if (!empty($object->Price)) {
-            $object->Price = floor($object->Price * 1.5);
-        }
-
-        if ($object->Category === 'Женское') {
-            $object->Category = 'Женская одежда';
-        }
-
-        if ($object->Category === 'Женская одежда') {
-            $object->TabCode = '
-<div class="t-store__tabs t-store__tabs_tabs t-col t-col_12" data-tab-design="tabs" data-active-tab="Доставка">
-   <div class="t-store__tabs__controls-wrap">
-      <div class="t-store__tabs__controls">
-         <style>    .t-store__tabs__controls-wrap:before, .t-store__tabs__controls-wrap:after {        display: none;        z-index: 1;        position: absolute;        content: "";        width: 50px;        bottom: 1px;        top: 0;        pointer-events: none;    }    .t-store__tabs__controls-wrap_left:before {background-image:linear-gradient(to right,rgba(255,255,255,1) 0%, rgba(255,255,255,0) 90%);        left: -1px;    }    .t-store__tabs__controls-wrap_right:after {background-image:linear-gradient(to right,rgba(255,255,255,0) 0%, rgba(255,255,255,1) 90%);        right: -2px;    }    .t-store__tabs__controls-wrap_left:before {        display: block;    }    .t-store__tabs__controls-wrap_right:after {        display: block;    }</style>
-         <div class="t-store__tabs__button js-store-tab-button t-store__tabs__button_active" data-tab-title="Доставка">
-            <div class="t-store__tabs__button-title t-name t-name_xs">Доставка</div>
-         </div>
-         <div class="t-store__tabs__button js-store-tab-button " data-tab-title="Оплата">
-            <div class="t-store__tabs__button-title t-name t-name_xs">Оплата</div>
-         </div>
-         <div class="t-store__tabs__button js-store-tab-button " data-tab-title="Таблица размеров">
-            <div class="t-store__tabs__button-title t-name t-name_xs">Таблица размеров</div>
-         </div>
-      </div>
-   </div>
-   <div class="t-store__tabs__list">
-      <div class="t-store__tabs__item t-store__tabs__item_active" data-tab-title="Доставка" data-tab-type="info">
-         <div class="t-store__tabs__item-button js-store-tab-button" data-tab-title="Доставка">
-            <div class="t-store__tabs__item-title t-name t-name_xs">Доставка                </div>
-         </div>
-         <div class="t-store__tabs__content t-descr t-descr_xxs">
-            <figure data-alt="" data-src="https://static.tildacdn.com/stor3264-3932-4637-a336-373663663439/31826693.png" contenteditable="false"><img src="https://thumb.tildacdn.com/stor3264-3932-4637-a336-373663663439/-/resize/760x/-/format/webp/31826693.png" alt="" class="t-img loaded" data-original="https://static.tildacdn.com/stor3264-3932-4637-a336-373663663439/31826693.png"></figure>
-            Сумма доставки может измениться в зависимости от объема заказа, точную сумму уточняйте у оператора.            
-         </div>
-      </div>
-      <div class="t-store__tabs__item " data-tab-title="Оплата" data-tab-type="info">
-         <div class="t-store__tabs__item-button js-store-tab-button" data-tab-title="Оплата">
-            <div class="t-store__tabs__item-title t-name t-name_xs">Оплата                </div>
-         </div>
-         <div class="t-store__tabs__content t-descr t-descr_xxs"><br>Вы можете оплатить товар на сайте с помощью банковской карты.<br>В отделении СДЭК при получении.<br>В почтовом отделении при получении наложеным платежом.<br>Курьеру СДЭК при заказе доставки до двери.<br><br>            </div>
-      </div>
-      <div class="t-store__tabs__item " data-tab-title="Таблица размеров" data-tab-type="info">
-         <div class="t-store__tabs__item-button js-store-tab-button" data-tab-title="Таблица размеров">
-            <div class="t-store__tabs__item-title t-name t-name_xs">Таблица размеров                </div>
-         </div>
-         <div class="t-store__tabs__content t-descr t-descr_xxs">
-            <figure data-alt="" data-src="https://static.tildacdn.com/stor6236-6262-4534-b463-393233656634/73671876.jpg" contenteditable="false"><img src="https://static.tildacdn.com/stor6236-6262-4534-b463-393233656634/-/empty/73671876.jpg" alt="" class="t-img" data-original="https://static.tildacdn.com/stor6236-6262-4534-b463-393233656634/73671876.jpg"></figure>
-         </div>
-      </div>
-   </div>
-</div>
-';
-        }
-    }
-
-    $jsResult = json_encode($arr);
-
-    jsonToCsv($jsResult, $resultFilePath);
+    return "
+        <h3>Оплата</h3>
+        <table style='width: 100%; margin-bottom: 20px; border: 1px solid #dddddd; border-collapse: collapse; '>
+            <tr>
+               <td style='border: 1px solid #dddddd; padding: 5px;'>на сайте с помощью банковской карты</td>
+            </tr>
+            <tr>
+                <td style='border: 1px solid #dddddd; padding: 5px;'>в отделении СДЭК при получении</td>
+            </tr>
+            <tr>
+                <td style='border: 1px solid #dddddd; padding: 5px;'>в почтовом отделении при получении наложенным платежом</td>
+            </tr>
+            <tr>
+                <td style='border: 1px solid #dddddd; padding: 5px;'>курьеру СДЭК при заказе доставки до двери</td>
+            </tr>
+        </table>
+    ";
 }
 
-function girlClothesV1(): void
+function getDeliveryHtml(): string
 {
-    $inputFileName = './src/girlClothes/girlClothes.json';
-    $resultJsonFile = './result/girlClothes/girlClothes.json';
-
-    $js = file_get_contents($inputFileName);
-
-    $arr = json_decode($js);
-
-    foreach ($arr as $key => $object) {
-        if (!empty($object->Price)) {
-            $object->Price = floor($object->Price * 1.5);
-        }
-
-        if ($object->Category === 'Женское') {
-            $object->Category = 'Женская одежда';
-        }
-    }
-
-    $jsResult = json_encode($arr);
-
-    file_put_contents($resultJsonFile, $jsResult);
+    return "
+            <br>
+            <h3>Доставка</h3>
+            <div>
+                <table style='width: 100%; margin-bottom: 20px; border: 1px solid #dddddd; border-collapse: collapse; '>
+                    <tr>
+                        <th style='font-weight: bold; padding: 5px; background: #efefef; border: 1px solid #dddddd;'>Способ</th>
+                        <th style='font-weight: bold; padding: 5px; background: #efefef; border: 1px solid #dddddd;'>Срок</th>
+                        <th style='font-weight: bold; padding: 5px; background: #efefef; border: 1px solid #dddddd;'>Стоимость</th>
+                    </tr>
+                    <tr>
+                        <td style='border: 1px solid #dddddd; padding: 5px;'>почтой РФ через почтовое отделение</td>
+                        <td style='border: 1px solid #dddddd; padding: 5px;'>8-12 дней</td>
+                        <td style='border: 1px solid #dddddd; padding: 5px;'>350 руб.</td>
+                    </tr>
+                    <tr>
+                        <td style='border: 1px solid #dddddd; padding: 5px;'>СДЭК курьером до двери</td>
+                        <td style='border: 1px solid #dddddd; padding: 5px;'>3 дня</td>
+                        <td style='border: 1px solid #dddddd; padding: 5px;'>650 руб.</td>
+                    </tr>
+                    <tr>
+                        <td style='border: 1px solid #dddddd; padding: 5px;'>СДЭК в пункте выдачи</td>
+                        <td style='border: 1px solid #dddddd; padding: 5px;'>3 дня</td>
+                        <td style='border: 1px solid #dddddd; padding: 5px;'>500 руб.</td>
+                    </tr>
+                    <tr>
+                        <td style='border: 1px solid #dddddd; padding: 5px;'>почтой РФ через почтамат</td>
+                        <td style='border: 1px solid #dddddd; padding: 5px;'></td>
+                        <td style='border: 1px solid #dddddd; padding: 5px;'>0 руб.</td>
+                    </tr>
+                </table>
+            </div>
+            ";
 }
 
-// Функция для преобразования CSV в JSON
+function addInlineStylesToAttributes(string $html): string
+{
+    $html = preg_replace('/<table\b[^>]*>/', '<table style="width: 100%; margin-bottom: 20px; border: 1px solid #dddddd; border-collapse: collapse;">', $html);
+
+    $html = preg_replace('/<th\b[^>]*>/', '<th style="font-weight: bold; padding: 5px; background: #efefef; border: 1px solid #dddddd;">', $html);
+
+    $html = preg_replace('/<td\b[^>]*>/', '<td style="border: 1px solid #dddddd; padding: 5px;">', $html);
+
+    return $html;
+}
+
 function csvToJson($csvFilePath): string | bool
 {
     $csvFile = fopen($csvFilePath, 'r');
@@ -260,25 +264,4 @@ function jsonToCsv(string $jsonString, string $csvFilePath, bool $doubleQuotes =
     }
 
     return true;
-}
-
-function filesAreEqualByHash(string $filePath1, string $filePath2): bool
-{
-    $hash1 = hash_file('md5', $filePath1);
-    $hash2 = hash_file('md5', $filePath2);
-
-    return $hash1 === $hash2;
-}
-
-
-function jsonEncode(mixed $data): string
-{
-    return json_encode(
-        $data,
-        JSON_UNESCAPED_UNICODE
-        | JSON_PRETTY_PRINT
-        | JSON_UNESCAPED_SLASHES
-        | JSON_NUMERIC_CHECK
-        | JSON_UNESCAPED_LINE_TERMINATORS
-    );
 }
