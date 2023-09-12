@@ -6,27 +6,12 @@ require_once './vendor/autoload.php';
 require_once 'V2.php';
 
 main();
-//testHtml();
 
 function main(): void
 {
-//    echo "Введите путь к источнику: ";
-//    $srcPath = fgets(STDIN);
-//
-//    echo "Введите путь к желаемому результату: ";
-//    $resultPath = fgets(STDIN);
-//
-//    echo "Введите название старого раздела: ";
-//    $oldCategory = fgets(STDIN);
-//
-//    echo "Введите название нового раздела: ";
-//    $newCategory = fgets(STDIN);
-//
-//    createFixedClone($srcPath, $resultPath, $oldCategory, $newCategory);
-
     createFixedCloneNoChunk(
-        '/home/dan/www/php/fixer/src/girlClothes/girlClothes.csv',
-        '/home/dan/www/php/fixer/result/girlClothes.csv',
+        '/home/dan/www/fixer/src/girlClothes/girlClothes.csv',
+        '/home/dan/www/fixer/result/girlClothes.csv',
         'Женское',
         'Женская одежда'
     );
@@ -73,11 +58,11 @@ function createFixedCloneNoChunk(string $srcCsvPath, string $resultCsvPath, stri
 
             $object['Description'] = '';
 
-            echo $newCategory . '_' . $counter . PHP_EOL;
-
             ++$counter;
         }
     }
+
+    echo $newCategory . '_' . $counter . PHP_EOL;
 
     $jsResult = json_encode($arr);
 

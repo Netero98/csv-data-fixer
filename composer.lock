@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f4c9daeeb4f8bfb5ecaba31420006866",
+    "content-hash": "1a1be34d962ae3d8d04907865ef45102",
     "packages": [
         {
             "name": "league/csv",
@@ -167,7 +167,8 @@
     "prefer-lowest": false,
     "platform": {
         "ext-dom": "*",
-        "ext-libxml": "*"
+        "ext-libxml": "*",
+        "ext-readline": "*"
     },
     "platform-dev": [],
     "plugin-api-version": "2.6.0"
