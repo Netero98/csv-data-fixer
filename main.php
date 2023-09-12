@@ -1,41 +1,37 @@
 <?php
 
-declare(strict_types=1);
-
 require_once './vendor/autoload.php';
 require_once 'V2.php';
 
-main();
+// main();
 
-function main(): void
+class Fixer 
 {
-    createFixedCloneNoChunk(
-        '/home/dan/www/fixer/src/girlClothes/girlClothes.csv',
-        '/home/dan/www/fixer/result/girlClothes.csv',
-        'Женское',
-        'Женская одежда'
-    );
+    const CATEGORY_GIRL_CLOTHES = 'Женская одежда';
+    const CATEGORY_GIRL_BOOTS = 'Женская обувь';
+    const CATEGORY_MAN_CLOTHES = 'Мужская одежда';
+    const CATEGORY_MAN_BOOTS = 'Мужская обувь';
 
-    createFixedCloneNoChunk(
-        './src/girlBoots/girlBoots.csv',
-        './result/girlBoots.csv',
-        'Женское',
-        'Женская обувь'
-    );
+    public static function getOldCategory()
+    {
+        return __DIR__ . '/src/tempfile';
+    }
 
-    createFixedCloneNoChunk(
-        './src/manClothes/manClothes.csv',
-        './result/manClothes.csv',
-        'Мужское',
-        'Мужская одежда'
-    );
+    public function main($srcFilePath, $category): void
+    {
+        if ($category === self::CATEGORY_GIRL_BOOTS || $category === self::CATEGORY_GIRL_CLOTHES) {
+            $oldCategory = 'Женское';
+        } else {
+            $oldCategory = 'Мужское';
+        }
 
-    createFixedCloneNoChunk(
-        './src/manBoots/manBoots.csv',
-        './result/manBoots.csv',
-        'Мужское',
-        'Мужская обувь'
-    );
+        createFixedCloneNoChunk(
+            $srcFilePath,
+            $srcFilePath,
+            $oldCategory,
+            $category
+        );
+    }
 }
 
 function createFixedCloneNoChunk(string $srcCsvPath, string $resultCsvPath, string $oldCategory, string $newCategory): void
