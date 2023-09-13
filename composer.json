@@ -4,6 +4,8 @@
         "league/csv": "^9.0",
       "ext-dom": "*",
       "ext-libxml": "*",
-      "ext-readline": "*"
+      "ext-readline": "*",
+      "ext-zip": "*",
+        "pclzip/pclzip": "^2.8"
     }
 }

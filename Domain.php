@@ -1,39 +1,134 @@
 <?php
 
+declare(strict_types=1);
+
 require_once './vendor/autoload.php';
 
-class Fixer 
+class Domain
 {
-    const CATEGORY_GIRL_CLOTHES = 'Женская одежда';
-    const CATEGORY_GIRL_BOOTS = 'Женская обувь';
+    const OLD_CATEGORY_MEN = 'Мужское';
+    const OLD_CATEGORY_WOMEN = 'Женское';
+    const CATEGORY_WOMEN_CLOTHES = 'Женская одежда';
+    const CATEGORY_WOMEN_BOOTS = 'Женская обувь';
     const CATEGORY_MAN_CLOTHES = 'Мужская одежда';
     const CATEGORY_MAN_BOOTS = 'Мужская обувь';
+    const CHUNK_SIZE = 700;
 
     public function main(string $srcFilePath, string $category): void
     {
-        if ($category === self::CATEGORY_GIRL_BOOTS || $category === self::CATEGORY_GIRL_CLOTHES) {
-            $oldCategory = 'Женское';
+        if ($category === self::CATEGORY_WOMEN_BOOTS || $category === self::CATEGORY_WOMEN_CLOTHES) {
+            $oldCategory = self::OLD_CATEGORY_WOMEN;
         } else {
-            $oldCategory = 'Мужское';
+            $oldCategory = self::OLD_CATEGORY_MEN;
         }
 
         $isClothes = in_array(
             $category,
-            [self::CATEGORY_MAN_CLOTHES, self::CATEGORY_GIRL_CLOTHES]
+            [self::CATEGORY_MAN_CLOTHES, self::CATEGORY_WOMEN_CLOTHES]
         );
 
-        $this->createFixedChunks($srcFilePath, $srcFilePath, $oldCategory, $category, $isClothes);
+        $results = $this->createFixedClones($srcFilePath, $oldCategory, $category, $isClothes);
 
-        $this->sendFileAndDelete($srcFilePath);
+        $count = count($results);
+
+        if ($count > 1) {
+            $this->createAndSendZipArchive($results);
+        } else {
+            $this->sendFileAndDelete(current($results));
+        }
     }
 
-    function createFixedChunks(string $srcCsvPath, string $resultCsvPath, string $oldCategory, string $newCategory, bool $isClothes): void
+    function createAndSendZipArchive($filePaths)
+    {
+        // Проверяем, есть ли файлы для архивации
+        if (empty($filePaths)) {
+            throw new RuntimeException("Нет файлов для архивации.");
+        }
+
+        // Создаем временное имя архива
+        $zipFileName = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'archive_' . random_int(1, 99999999). '.zip';
+
+        $archive = new PclZip($zipFileName);
+
+        $firstIter = true;
+
+        foreach ($filePaths as $filePath) {
+            $v_filename = basename($filePath);
+            $v_content = file_get_contents($filePath);
+
+            if ($firstIter) {
+                $list = $archive->create(
+                    [
+                        [
+                            PCLZIP_ATT_FILE_NAME => $v_filename,
+                            PCLZIP_ATT_FILE_CONTENT => $v_content
+                        ]
+                    ]
+                );
+
+                if ($list == 0) {
+                    throw new RuntimeException("ERROR : '".$archive->errorInfo(true)."'");
+                }
+
+                $firstIter = false;
+            } else {
+                $list = $archive->add(                 [
+                    [
+                        PCLZIP_ATT_FILE_NAME => $v_filename,
+                        PCLZIP_ATT_FILE_CONTENT => $v_content
+                    ]
+                ]);
+
+                if ($list == 0) {
+                    throw new RuntimeException("ERROR : '".$archive->errorInfo(true)."'");
+                }
+            }
+        }
+
+        $this->sendFileAndDelete($zipFileName);
+    }
+
+    function createFixedCloneNoChunks(string $srcCsvPath, string $resultCsvPath, string $oldCategory, string $newCategory, bool $isClothes): void
     {
         $js =  $this->csvToJson($srcCsvPath);
 
         $arr = json_decode($js, true);
 
+        foreach ($arr as $key => &$object) {
+            if (!empty($object['Price'])) {
+                $additionalPrice = $isClothes
+                    ? floor($object['Price'] * 0.5)
+                    : 1500;
+
+                $object['Price'] = floor($object['Price'] + $additionalPrice);
+            }
+
+            if ($object['Category'] === $oldCategory) {
+                $object['Category'] = $newCategory;
+
+                $object['Text'] = $this->addInlineStylesToAttributes($object['Text']) .  $this->getDeliveryHtml() .  $this->getPaymentHtml();
+
+                $object['Description'] = '';
+            }
+        }
+
+        $jsResult = json_encode($arr);
+
+        $this->jsonToCsv($jsResult, $resultCsvPath);
+    }
+
+    /**
+     * @return string[] - пути к файлам результата
+     */
+    function createFixedClones(string $srcCsvPath, string $oldCategory, string $newCategory, bool $isClothes): array
+    {
+        $js = $this->csvToJson($srcCsvPath);
+
+        $arr = json_decode($js, true);
+
         $counter = 0;
+
+        $result = [];
 
         foreach ($arr as $key => &$object) {
             ++$counter;
@@ -49,15 +144,31 @@ class Fixer
             if ($object['Category'] === $oldCategory) {
                 $object['Category'] = $newCategory;
 
-                $object['Text'] =  $this->addInlineStylesToAttributes($object['Text']) .  $this->getDeliveryHtml() .  $this->getPaymentHtml();
-
                 $object['Description'] = '';
+
+                $object['Text'] = $this->addInlineStylesToAttributes($object['Text']) . $this->getDeliveryHtml() . $this->getPaymentHtml();
+            }
+
+            if (($counter) % self::CHUNK_SIZE === 0) {
+                $jsResult = json_encode(array_slice($arr, $counter - self::CHUNK_SIZE, self::CHUNK_SIZE));
+
+                $path =  sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'items_' . $counter + 1 - self::CHUNK_SIZE . '-' . $counter . '.csv';
+
+                $result[] = $path;
+
+                $this->jsonToCsv($jsResult, $path, false);
             }
         }
 
-        $jsResult = json_encode($arr);
+        $jsResult = json_encode(array_slice($arr, $counter - ($counter % self::CHUNK_SIZE)));
 
-        $this->jsonToCsv($jsResult, $resultCsvPath);
+        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'items_' . $counter - ($counter % self::CHUNK_SIZE) + 1 . '-' . $counter + 1 . '.csv';
+
+        $result[] = $path;
+
+        $this->jsonToCsv($jsResult, $path);
+
+        return $result;
     }
 
     private function sendFileAndDelete($file): void

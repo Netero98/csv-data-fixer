@@ -5,20 +5,22 @@
 </head>
 <body>
    <?php
-   require_once "Fixer.php";
+   require_once "Domain.php";
 
-   $fixer = new Fixer();
+   $domain = new Domain();
 
    if ($_SERVER["REQUEST_METHOD"] == "POST") {
       // Обработка данных, если форма была отправлена
       $category = trim((string) $_POST["category"]);
 
        if ($_FILES && $_FILES["file"]["error"]== UPLOAD_ERR_OK) {
-           $name = $_FILES["file"]["name"];
+           $originalName = $_FILES["file"]["name"];
 
-           move_uploaded_file($_FILES["file"]["tmp_name"], $name);
+           $srcFilePath =  sys_get_temp_dir() . DIRECTORY_SEPARATOR . $originalName;
 
-           $fixer->main($name, $category);
+           move_uploaded_file($_FILES["file"]["tmp_name"], $srcFilePath);
+
+           $domain->main($srcFilePath, $category);
        }
    }
    ?>
@@ -26,16 +28,16 @@
    <form method="POST" action="index.php" enctype="multipart/form-data">
       <label for="radio">Выберите категорию товаров: </label>
        <div>
-           <input type="radio" name="category" value="<?php echo Fixer::CATEGORY_GIRL_CLOTHES; ?>"><?php echo Fixer::CATEGORY_GIRL_CLOTHES; ?>
+           <input type="radio" name="category" value="<?php echo Domain::CATEGORY_WOMEN_CLOTHES; ?>"><?php echo Domain::CATEGORY_WOMEN_CLOTHES; ?>
        </div>
        <div>
-           <input type="radio" name="category" value="<?php echo Fixer::CATEGORY_GIRL_BOOTS; ?>"> <?php echo Fixer::CATEGORY_GIRL_BOOTS; ?>
+           <input type="radio" name="category" value="<?php echo Domain::CATEGORY_WOMEN_BOOTS; ?>"> <?php echo Domain::CATEGORY_WOMEN_BOOTS; ?>
        </div>
        <div>
-           <input type="radio" name="category" value="<?php echo Fixer::CATEGORY_MAN_CLOTHES; ?>"> <?php echo Fixer::CATEGORY_MAN_CLOTHES; ?>
+           <input type="radio" name="category" value="<?php echo Domain::CATEGORY_MAN_CLOTHES; ?>"> <?php echo Domain::CATEGORY_MAN_CLOTHES; ?>
        </div>
        <div>
-           <input type="radio" name="category" value="<?php echo Fixer::CATEGORY_MAN_BOOTS; ?>"> <?php echo Fixer::CATEGORY_MAN_BOOTS; ?>
+           <input type="radio" name="category" value="<?php echo Domain::CATEGORY_MAN_BOOTS; ?>"> <?php echo Domain::CATEGORY_MAN_BOOTS; ?>
        </div>
 
        <br>
