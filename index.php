@@ -28,16 +28,16 @@
    <form method="POST" action="index.php" enctype="multipart/form-data">
       <label for="radio">Выберите категорию товаров: </label>
        <div>
-           <input type="radio" name="category" value="<?php echo Domain::CATEGORY_WOMEN_CLOTHES; ?>"><?php echo Domain::CATEGORY_WOMEN_CLOTHES; ?>
+           <input type="radio" name="category" value="<?php echo Domain::CATEGORY_WOMEN_CLOTHES; ?>"><?php echo Domain::CATEGORY_WOMEN_CLOTHES . '(взамен ' . Domain::OLD_CATEGORY_WOMEN . ')'; ?>
        </div>
        <div>
-           <input type="radio" name="category" value="<?php echo Domain::CATEGORY_WOMEN_BOOTS; ?>"> <?php echo Domain::CATEGORY_WOMEN_BOOTS; ?>
+           <input type="radio" name="category" value="<?php echo Domain::CATEGORY_WOMEN_BOOTS; ?>"> <?php echo Domain::CATEGORY_WOMEN_BOOTS. '(взамен ' . Domain::OLD_CATEGORY_WOMEN . ')'; ?>
        </div>
        <div>
-           <input type="radio" name="category" value="<?php echo Domain::CATEGORY_MAN_CLOTHES; ?>"> <?php echo Domain::CATEGORY_MAN_CLOTHES; ?>
+           <input type="radio" name="category" value="<?php echo Domain::CATEGORY_MEN_CLOTHES; ?>"> <?php echo Domain::CATEGORY_MEN_CLOTHES. '(взамен ' . Domain::OLD_CATEGORY_MEN . ')'; ?>
        </div>
        <div>
-           <input type="radio" name="category" value="<?php echo Domain::CATEGORY_MAN_BOOTS; ?>"> <?php echo Domain::CATEGORY_MAN_BOOTS; ?>
+           <input type="radio" name="category" value="<?php echo Domain::CATEGORY_MEN_BOOTS; ?>"> <?php echo Domain::CATEGORY_MEN_BOOTS. '(взамен ' . Domain::OLD_CATEGORY_MEN . ')'; ?>
        </div>
 
        <br>

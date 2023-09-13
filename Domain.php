@@ -10,8 +10,8 @@ class Domain
     const OLD_CATEGORY_WOMEN = 'Женское';
     const CATEGORY_WOMEN_CLOTHES = 'Женская одежда';
     const CATEGORY_WOMEN_BOOTS = 'Женская обувь';
-    const CATEGORY_MAN_CLOTHES = 'Мужская одежда';
-    const CATEGORY_MAN_BOOTS = 'Мужская обувь';
+    const CATEGORY_MEN_CLOTHES = 'Мужская одежда';
+    const CATEGORY_MEN_BOOTS = 'Мужская обувь';
     const CHUNK_SIZE = 700;
 
     public function main(string $srcFilePath, string $category): void
@@ -24,10 +24,11 @@ class Domain
 
         $isClothes = in_array(
             $category,
-            [self::CATEGORY_MAN_CLOTHES, self::CATEGORY_WOMEN_CLOTHES]
+            [self::CATEGORY_MEN_CLOTHES, self::CATEGORY_WOMEN_CLOTHES]
         );
 
         $results = $this->createFixedClones($srcFilePath, $oldCategory, $category, $isClothes);
+//        $results = [$this->createFixedCloneNoChunks($srcFilePath, $oldCategory, $category, $isClothes)];
 
         $count = count($results);
 
@@ -38,7 +39,7 @@ class Domain
         }
     }
 
-    function createAndSendZipArchive($filePaths)
+    private function createAndSendZipArchive($filePaths): void
     {
         // Проверяем, есть ли файлы для архивации
         if (empty($filePaths)) {
@@ -88,71 +89,77 @@ class Domain
         $this->sendFileAndDelete($zipFileName);
     }
 
-    function createFixedCloneNoChunks(string $srcCsvPath, string $resultCsvPath, string $oldCategory, string $newCategory, bool $isClothes): void
+    private function createFixedCloneNoChunks(string $srcCsvPath, string $oldCategory, string $newCategory, bool $isClothes): string
     {
         $js =  $this->csvToJson($srcCsvPath);
 
         $arr = json_decode($js, true);
 
-        foreach ($arr as $key => &$object) {
-            if (!empty($object['Price'])) {
-                $additionalPrice = $isClothes
-                    ? floor($object['Price'] * 0.5)
-                    : 1500;
-
-                $object['Price'] = floor($object['Price'] + $additionalPrice);
-            }
-
-            if ($object['Category'] === $oldCategory) {
-                $object['Category'] = $newCategory;
-
-                $object['Text'] = $this->addInlineStylesToAttributes($object['Text']) .  $this->getDeliveryHtml() .  $this->getPaymentHtml();
-
-                $object['Description'] = '';
-            }
+        foreach ($arr as &$object) {
+            $this->mutateObject($object, $oldCategory, $newCategory, $isClothes);
         }
 
         $jsResult = json_encode($arr);
 
+        $resultCsvPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'items.csv';
+
         $this->jsonToCsv($jsResult, $resultCsvPath);
+
+        return $resultCsvPath;
+    }
+
+    private function mutateObject(&$object, string $oldCategory, string $newCategory, bool $isClothes): bool
+    {
+        $isReal = false;
+
+        if (!empty($object['Price'])) {
+            $additionalPrice = $isClothes
+                ? floor($object['Price'] * 0.5)
+                : 1500;
+
+            $object['Price'] = floor($object['Price'] + $additionalPrice);
+        }
+
+        if ($object['Category'] === $oldCategory) {
+            $isReal = true;
+
+            $object['Category'] = $newCategory;
+
+            $object['Text'] = '<div>' . $this->addInlineStylesToAttributes($object['Text']) . '<div/>' . $this->getDeliveryHtml() .  $this->getPaymentHtml();
+
+            $object['Description'] = '';
+        }
+
+        return $isReal;
     }
 
     /**
      * @return string[] - пути к файлам результата
      */
-    function createFixedClones(string $srcCsvPath, string $oldCategory, string $newCategory, bool $isClothes): array
+    private function createFixedClones(string $srcCsvPath, string $oldCategory, string $newCategory, bool $isClothes): array
     {
         $js = $this->csvToJson($srcCsvPath);
 
         $arr = json_decode($js, true);
 
         $counter = 0;
+        $counterReal = 0;
 
         $result = [];
 
-        foreach ($arr as $key => &$object) {
+        foreach ($arr as &$object) {
             ++$counter;
 
-            if (!empty($object['Price'])) {
-                $additionalPrice = $isClothes
-                    ? floor($object['Price'] * 0.5)
-                    : 1500;
-
-                $object['Price'] = floor($object['Price'] + $additionalPrice);
-            }
-
-            if ($object['Category'] === $oldCategory) {
-                $object['Category'] = $newCategory;
-
-                $object['Description'] = '';
-
-                $object['Text'] = $this->addInlineStylesToAttributes($object['Text']) . $this->getDeliveryHtml() . $this->getPaymentHtml();
-            }
+            if ($this->mutateObject($object, $oldCategory, $newCategory, $isClothes)) {
+                ++$counterReal;
+            };
 
             if (($counter) % self::CHUNK_SIZE === 0) {
                 $jsResult = json_encode(array_slice($arr, $counter - self::CHUNK_SIZE, self::CHUNK_SIZE));
 
-                $path =  sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'items_' . $counter + 1 - self::CHUNK_SIZE . '-' . $counter . '.csv';
+                $path =  sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'items_' . $counter + 1 - self::CHUNK_SIZE . '-' . $counter  . '__' . $counterReal . '.csv';
+
+                $counterReal = 0;
 
                 $result[] = $path;
 
@@ -160,9 +167,11 @@ class Domain
             }
         }
 
-        $jsResult = json_encode(array_slice($arr, $counter - ($counter % self::CHUNK_SIZE)));
+        $offset = $counter - ($counter % self::CHUNK_SIZE);
 
-        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'items_' . $counter - ($counter % self::CHUNK_SIZE) + 1 . '-' . $counter + 1 . '.csv';
+        $jsResult = json_encode(array_slice($arr, $offset));
+
+        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'items_' .$offset + 1 . '-' . $counter + 1 . '__' . $counterReal . '.csv';
 
         $result[] = $path;
 
@@ -194,7 +203,7 @@ class Domain
         }
     }
 
-    function getPaymentHtml(): string
+    private function getPaymentHtml(): string
     {
         return "
         <h3>Оплата</h3>
@@ -215,7 +224,7 @@ class Domain
     ";
     }
 
-    function getDeliveryHtml(): string
+    private function getDeliveryHtml(): string
     {
         return "
             <br>
@@ -252,7 +261,7 @@ class Domain
             ";
     }
 
-    function addInlineStylesToAttributes(string $html): string
+    private function addInlineStylesToAttributes(string $html): string
     {
         $html = preg_replace('/<table\b[^>]*>/', '<table style="width: 100%; margin-bottom: 20px; border: 1px solid #dddddd; border-collapse: collapse;">', $html);
 
@@ -263,7 +272,7 @@ class Domain
         return $html;
     }
 
-    function csvToJson($csvFilePath): string | bool
+    private function csvToJson($csvFilePath): string | bool
     {
         $csvFile = fopen($csvFilePath, 'r');
         if ($csvFile === false) {
@@ -293,11 +302,11 @@ class Domain
         );
     }
 
-    function jsonToCsv(string $jsonString, string $csvFilePath, bool $doubleQuotes = true): bool
+    private function jsonToCsv(string $jsonString, string $csvFilePath): bool
     {
-        $jsonData = json_decode($jsonString, true);
+        $data = json_decode($jsonString, true);
 
-        if ($jsonData === null) {
+        if ($data === null) {
             return false;
         }
 
@@ -309,34 +318,18 @@ class Domain
 
         $headersWritten = false;
 
-        foreach ($jsonData as $row) {
+        foreach ($data as $object) {
             // Iterate through the row and remove double quotes from values with spaces
 
             if (!$headersWritten) {
-                fputcsv($csvFile, array_keys($row), ';',);
+                fputcsv($csvFile, array_keys($object), ';', enclosure: '"');
                 $headersWritten = true;
             }
 
-            fputcsv($csvFile, $row, ';',);
+            fputcsv($csvFile, $object, ';', enclosure: '"');
         }
 
         fclose($csvFile);
-
-        if (!$doubleQuotes) {
-            $csvAfter = file_get_contents($csvFilePath);
-
-            $csvCharsArr = str_split($csvAfter);
-
-            foreach ($csvCharsArr as &$char) {
-                if ($char === '"') {
-                    $char = '';
-                }
-            }
-
-            $csvResult = implode('', $csvCharsArr);
-
-            file_put_contents($csvFilePath, $csvResult);
-        }
 
         return true;
     }
