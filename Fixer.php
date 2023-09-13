@@ -22,12 +22,12 @@ class Fixer
             [self::CATEGORY_MAN_CLOTHES, self::CATEGORY_GIRL_CLOTHES]
         );
 
-        $this->createFixedCloneNoChunk($srcFilePath, $srcFilePath, $oldCategory, $category, $isClothes);
+        $this->createFixedChunks($srcFilePath, $srcFilePath, $oldCategory, $category, $isClothes);
 
         $this->sendFileAndDelete($srcFilePath);
     }
 
-    function createFixedCloneNoChunk(string $srcCsvPath, string $resultCsvPath, string $oldCategory, string $newCategory, bool $isClothes): void
+    function createFixedChunks(string $srcCsvPath, string $resultCsvPath, string $oldCategory, string $newCategory, bool $isClothes): void
     {
         $js =  $this->csvToJson($srcCsvPath);
 
@@ -36,6 +36,8 @@ class Fixer
         $counter = 0;
 
         foreach ($arr as $key => &$object) {
+            ++$counter;
+
             if (!empty($object['Price'])) {
                 $additionalPrice = $isClothes
                     ? floor($object['Price'] * 0.5)
@@ -50,8 +52,6 @@ class Fixer
                 $object['Text'] =  $this->addInlineStylesToAttributes($object['Text']) .  $this->getDeliveryHtml() .  $this->getPaymentHtml();
 
                 $object['Description'] = '';
-
-                ++$counter;
             }
         }
 
