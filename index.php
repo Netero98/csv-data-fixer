@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-   <title>Пример формы</title>
+   <title>Обработка данных товаров</title>
 </head>
 <body>
    <?php
