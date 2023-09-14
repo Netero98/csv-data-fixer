@@ -12,7 +12,7 @@ class Domain
     const CATEGORY_WOMEN_BOOTS = 'Женская обувь';
     const CATEGORY_MEN_CLOTHES = 'Мужская одежда';
     const CATEGORY_MEN_BOOTS = 'Мужская обувь';
-    const CHUNK_SIZE = 700;
+    const CHUNK_SIZE = 3700;
 
     public function main(string $srcFilePath, string $category): void
     {
