@@ -108,9 +108,17 @@ class Domain
         return $resultCsvPath;
     }
 
+    function decodeUnicodeString($input) {
+        return preg_replace_callback('/\\\\u([0-9a-fA-F]{4})/', function ($matches) {
+            return mb_convert_encoding(pack('H*', $matches[1]), 'UTF-8', 'UCS-2BE');
+        }, $input);
+    }
+
     private function mutateObject(array &$object, string $oldCategory, string $newCategory, bool $isClothes): bool
     {
         $object['Characteristics:Раздел'] = '';
+
+        $object['Brand'] = $this->decodeUnicodeString($object['Brand']);
 
         $isReal = false;
 
@@ -129,8 +137,6 @@ class Domain
 
             $this->mutateCharacteristic($object, 'кроссовки', 'Кроссовки');
 
-            $this->mutateCharacteristic($object, 'баскетбол', 'Баскетбол');
-
             $this->mutateCharacteristic($object, 'фитнес', 'Бег/Фитнес');
 
             $this->mutateCharacteristic($object, 'брюки', 'Брюки, леггинсы');
@@ -142,12 +148,16 @@ class Domain
 
             $this->mutateCharacteristic($object, 'кеды', 'Кеды');
 
-            $this->mutateCharacteristic($object, 'куртка', 'Куртки, жилеты');
-            $this->mutateCharacteristic($object, 'жилет', 'Куртки, жилеты');
+            $this->mutateCharacteristic($object, 'куртка', 'Куртки, жилеты, бомберы');
+            $this->mutateCharacteristic($object, 'жилет', 'Куртки, жилеты, бомберы');
+            $this->mutateCharacteristic($object, 'бомбер', 'Куртки, жилеты, бомберы');
 
             $this->mutateCharacteristic($object, 'олимпийка', 'Олимпийки');
 
             $this->mutateCharacteristic($object, 'сандали', 'Сандали/Сланцы');
+            $this->mutateCharacteristic($object, 'сланцы', 'Сандали/Сланцы');
+            $this->mutateCharacteristic($object, 'шлепки', 'Сандали/Сланцы');
+            $this->mutateCharacteristic($object, 'шлёпки', 'Сандали/Сланцы');
 
             $this->mutateCharacteristic($object, 'свитшот', 'Свитшоты');
             $this->mutateCharacteristic($object, 'жилет', 'Куртки, жилеты');
@@ -166,8 +176,12 @@ class Domain
 
             $this->mutateCharacteristic($object, 'юбка', 'Юбки');
 
-//            $this->mutateCharacteristic($object, 'футбол', 'Футбол');
-            $this->mutateCharacteristic($object, 'бутсы', 'Бутсы');
+            $this->mutateCharacteristic($object, 'бутсы', 'Футбол');
+            $this->mutateCharacteristic($object, 'футбольн', 'Футбол');
+
+            $this->mutateCharacteristic($object, 'баскетбол', 'Баскетбол');
+            $this->mutateCharacteristic($object, 'скейтборд', 'Скейтбординг');
+
 
             $object['Category'] = $newCategory;
 
