@@ -108,8 +108,10 @@ class Domain
         return $resultCsvPath;
     }
 
-    private function mutateObject(&$object, string $oldCategory, string $newCategory, bool $isClothes): bool
+    private function mutateObject(array &$object, string $oldCategory, string $newCategory, bool $isClothes): bool
     {
+        $object['Characteristics:Раздел'] = '';
+
         $isReal = false;
 
         if (!empty($object['Price'])) {
@@ -123,6 +125,50 @@ class Domain
         if ($object['Category'] === $oldCategory) {
             $isReal = true;
 
+            $this->mutateCharacteristic($object, 'ботинки', 'Ботинки');
+
+            $this->mutateCharacteristic($object, 'кроссовки', 'Кроссовки');
+
+            $this->mutateCharacteristic($object, 'баскетбол', 'Баскетбол');
+
+            $this->mutateCharacteristic($object, 'фитнес', 'Бег/Фитнес');
+
+            $this->mutateCharacteristic($object, 'брюки', 'Брюки, леггинсы');
+            $this->mutateCharacteristic($object, 'леггинсы', 'Брюки, леггинсы');
+
+            $this->mutateCharacteristic($object, 'ветровка', 'Ветровки');
+
+            $this->mutateCharacteristic($object, 'джинсы', 'Джинсы');
+
+            $this->mutateCharacteristic($object, 'кеды', 'Кеды');
+
+            $this->mutateCharacteristic($object, 'куртка', 'Куртки, жилеты');
+            $this->mutateCharacteristic($object, 'жилет', 'Куртки, жилеты');
+
+            $this->mutateCharacteristic($object, 'олимпийка', 'Олимпийки');
+
+            $this->mutateCharacteristic($object, 'сандали', 'Сандали/Сланцы');
+
+            $this->mutateCharacteristic($object, 'свитшот', 'Свитшоты');
+            $this->mutateCharacteristic($object, 'жилет', 'Куртки, жилеты');
+
+            $this->mutateCharacteristic($object, 'костюм', 'Костюмы');
+
+            $this->mutateCharacteristic($object, 'худи', 'Толстовки, худи, лонгслив');
+            $this->mutateCharacteristic($object, 'толстовка', 'Толстовки, худи, лонгслив');
+            $this->mutateCharacteristic($object, 'лонгслив', 'Толстовки, худи, лонгслив');
+
+            $this->mutateCharacteristic($object, 'майка', 'Топы, майки');
+            $this->mutateCharacteristic($object, 'лонгслив', 'Толстовки, худи, лонгслив');
+
+            $this->mutateCharacteristic($object, 'шорты', 'Шорты, бриджи');
+            $this->mutateCharacteristic($object, 'бриджи', 'Шорты, бриджи');
+
+            $this->mutateCharacteristic($object, 'юбка', 'Юбки');
+
+//            $this->mutateCharacteristic($object, 'футбол', 'Футбол');
+            $this->mutateCharacteristic($object, 'бутсы', 'Бутсы');
+
             $object['Category'] = $newCategory;
 
             $object['Text'] = '<div>' . $this->addInlineStylesToAttributes($object['Text']) . '<div/>' . $this->getDeliveryHtml() .  $this->getPaymentHtml();
@@ -131,6 +177,16 @@ class Domain
         }
 
         return $isReal;
+    }
+
+    private function mutateCharacteristic(array &$object, string $needle, ?string $name = null): void
+    {
+        if (
+            str_contains(mb_strtolower($object['Title']), mb_strtolower($needle))
+            || str_contains(mb_strtolower($object['Text']), mb_strtolower($needle))
+        ) {
+            $object['Characteristics:Раздел'] = $name === null ? $needle : $name;
+        }
     }
 
     /**
@@ -209,16 +265,16 @@ class Domain
         <h3>Оплата</h3>
         <table style='width: 100%; margin-bottom: 20px; border: 1px solid #dddddd; border-collapse: collapse; '>
             <tr>
-               <td style='border: 1px solid #dddddd; padding: 5px;'>на сайте с помощью банковской карты</td>
+               <td style='border: 1px solid #dddddd; padding: 5px;'>На сайте с помощью банковской карты</td>
             </tr>
             <tr>
-                <td style='border: 1px solid #dddddd; padding: 5px;'>в отделении СДЭК при получении</td>
+                <td style='border: 1px solid #dddddd; padding: 5px;'>В отделении СДЭК при получении</td>
             </tr>
             <tr>
-                <td style='border: 1px solid #dddddd; padding: 5px;'>в почтовом отделении при получении наложенным платежом</td>
+                <td style='border: 1px solid #dddddd; padding: 5px;'>В почтовом отделении при получении наложенным платежом</td>
             </tr>
             <tr>
-                <td style='border: 1px solid #dddddd; padding: 5px;'>курьеру СДЭК при заказе доставки до двери</td>
+                <td style='border: 1px solid #dddddd; padding: 5px;'>Курьеру СДЭК при заказе доставки до двери</td>
             </tr>
         </table>
     ";
@@ -237,7 +293,7 @@ class Domain
                         <th style='font-weight: bold; padding: 5px; background: #efefef; border: 1px solid #dddddd;'>Стоимость</th>
                     </tr>
                     <tr>
-                        <td style='border: 1px solid #dddddd; padding: 5px;'>почтой РФ через почтовое отделение</td>
+                        <td style='border: 1px solid #dddddd; padding: 5px;'>Почтой РФ через почтовое отделение</td>
                         <td style='border: 1px solid #dddddd; padding: 5px;'>8-12 дней</td>
                         <td style='border: 1px solid #dddddd; padding: 5px;'>350 руб.</td>
                     </tr>
@@ -252,7 +308,7 @@ class Domain
                         <td style='border: 1px solid #dddddd; padding: 5px;'>500 руб.</td>
                     </tr>
                     <tr>
-                        <td style='border: 1px solid #dddddd; padding: 5px;'>почтой РФ через почтамат</td>
+                        <td style='border: 1px solid #dddddd; padding: 5px;'>Почтой РФ через почтамат</td>
                         <td style='border: 1px solid #dddddd; padding: 5px;'></td>
                         <td style='border: 1px solid #dddddd; padding: 5px;'>0 руб.</td>
                     </tr>
