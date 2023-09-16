@@ -158,6 +158,7 @@ class Domain
             $this->mutateCharacteristic($object, 'сланцы', 'Сандали/Сланцы');
             $this->mutateCharacteristic($object, 'шлепки', 'Сандали/Сланцы');
             $this->mutateCharacteristic($object, 'шлёпки', 'Сандали/Сланцы');
+            $this->mutateCharacteristic($object, 'шлепанцы', 'Сандали/Сланцы');
 
             $this->mutateCharacteristic($object, 'свитшот', 'Свитшоты');
             $this->mutateCharacteristic($object, 'жилет', 'Куртки, жилеты');
